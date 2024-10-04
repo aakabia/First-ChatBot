@@ -1,16 +1,262 @@
-
-
-
-*{
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: "Poppins",sans-serif;
+* {
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
 }
 
+/* Above is default css for all elements */
 
+.chatBot {
+  position: fixed; /* fixed position to scroll with our page*/
+  bottom: 0;
+  right: 0;
+  margin: 20px 40px 75px !important;
+  width: 350px !important; /*  use ! important to override bootstrap settings*/
+  height: 500px;
+  background: linear-gradient(white, gray);
+  overflow: hidden;
+  box-shadow: 20px 10px 15px rgba(0, 0, 0, 0.5);
+  border: 1px solid black;
+  border-radius: 20px;
+  transform: scale(0.5);
+  opacity: 0;
+  pointer-events: none;
 
-
-.blue{
-    color: blue ;
+  /* transform, opacity and point events are used to hide th chatbot
+  */
 }
+
+.showChatBot .chatBot {
+  transform: scale(1);
+  opacity: 1;
+  pointer-events: auto;
+  /* we show the chatBot by adjusting these values when showChatBot is present*/
+}
+
+.showChatBot .chatBot-toggler span:last-child {
+  opacity: 1;
+
+  /* when showChatBot is present we want the opacity of the last span child to be 1 or show.*/
+}
+
+/* 
+Above is our chatbot container, we postion the container at the bottom right.
+Also, we add some margins to push it away from corners and bottom.
+
+
+*/
+
+.chatHeader {
+  border-bottom: 1.5px solid black;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 50px;
+  width: 100%;
+}
+
+.chatHeader span {
+  position: absolute;
+  right: 20px;
+  cursor: pointer;
+  display: none;
+
+  /* This is used as our exit button when the viewport is less than 490px */
+}
+
+/*  
+Above, is our header for our chatbot 
+*/
+
+.chatBox {
+  list-style: none;
+  height: 365px;
+  padding: 10px !important;
+  overflow-y: auto;
+}
+
+.chat {
+  display: flex;
+  margin: 15px !important;
+  max-width: 70%;
+  overflow: hidden;
+  clear: both;
+}
+
+.chat p {
+  margin-bottom: 10px;
+  padding: 8px 12px !important;
+  border: 1.5px, solid black;
+  border-radius: 20px 20px 20px 0;
+  background-color: white;
+  /* Above displays how our text in the p tags will looks */
+}
+
+.outgoing {
+  float: right;
+  /* Above sets our outgoing messgae positioned to the right*/
+}
+
+.outgoing p {
+  background: linear-gradient(white, gray);
+  border-radius: 20px 20px 0 20px;
+}
+
+.chat span {
+  height: 32px;
+  width: 32px !important;
+  text-align: center;
+  line-height: 32px;
+  align-self: flex-end;
+  color: black;
+
+  /* Above psoitions our robot icon to the bottom left next to our p element.*/
+}
+/* 
+
+Above ends the css for our chat area!
+
+*/
+
+.chatInput {
+  position: absolute;
+  bottom: 0;
+  width: 100% !important;
+  background-color: white;
+  padding: 5px 20px !important;
+  border-top: 1px solid #ccc;
+  display: flex;
+  gap: 5px;
+
+  /* css for chatnput div 
+    we use diplay absolute because chatbot display is fixed 
+    add a bottom of zero to position it to bottom of container 
+
+    note* padding gives us space inside! helps push away from edges inside
+    
+    
+    */
+}
+
+.chatInput textarea {
+  border: none;
+  outline: none;
+  font-size: 0.95rem;
+  resize: none;
+  padding: 16px, 15px, 16px, 0 !important ;
+  width: 100% !important;
+  height: 85px;
+
+  /* 
+        we clear the border and outline of textarea,
+        assign it a heigh and width,
+        and give it some padding
+    
+    */
+}
+
+.chatInput span {
+  align-self: flex-end;
+  height: 55px;
+  line-height: 55px;
+  font-size: 1.35rem;
+  cursor: pointer;
+  color: black;
+  visibility: hidden;
+
+  /* 
+    we position our send button towrds the bottom with flex end 
+    assign it a heigh and the visibility is none cause we only want to it appear
+    when something is wriitn in it.
+    */
+}
+
+.chatInput textarea:valid ~ span {
+  visibility: visible;
+
+  /* css selector says get me the span that is a sibiling of textarea at the same level 
+        this, along with requried in the html is how we conditionally render the button.
+    */
+}
+
+/* end of input area css*/
+
+.chatBot-toggler {
+  position: fixed;
+  right: 40px;
+  bottom: 15px;
+  height: 50px;
+  width: 50px !important;
+  background: linear-gradient(white, gray);
+  color: black;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: none;
+  outline: none;
+  cursor: pointer;
+
+  /* Above is our CSS chatBot-toggeler button area. */
+}
+
+.chatBot-toggler span {
+  position: absolute;
+  /* position the spans absolute to chatBot-toggler*/
+}
+
+.showChatBot .chatBot-toggler span:first-child,
+.chatBot-toggler span:last-child {
+  opacity: 0;
+
+  /* 
+     When showChatBot is present we want the opacity of the first child to be zero or not show.
+     When chatBot-toggler is present we want the value of the last child to be zero or not show . 
+    
+    */
+}
+
+/*  End of toggeler button for chatbot.*/
+
+@media (max-width: 490px) {
+  /* our media query has a max width of 490px.
+     This states this css below will take place until 490 px.
+    */
+
+  .chatBot {
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: 0 !important;
+    width: 100% !important;
+    height: 100%;
+    border-radius: 0;
+    border: none;
+
+    /* 
+        we reset chatBot 
+        set with and height to 100%
+        and take away the border and border radius.
+        */
+  }
+
+  .chatBox {
+    height: 90%;
+    /* set height of chatBox to 90% of ChatBot.*/
+  }
+
+  .chatHeader span {
+    display: block;
+    /* display or exit at this view size */
+  }
+
+  .chatBot-toggler {
+    display: none;
+    pointer-events: none;
+    /* remove chatBot-toggler at tis size*/
+  }
+}
+
+/* End of media query for responsive design */
