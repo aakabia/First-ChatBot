@@ -1,0 +1,19 @@
+{
+  "name": "first-chatbot",
+  "version": "1.0.0",
+  "description": "My First Chatbot Application",
+  "main": "index.js",
+  "scripts": {
+    "start:client": "cd chatbot && npm run dev", 
+    "start:server": "cd server && node server.js",
+    "start": "concurrently \"npm run start:client\" \"npm run start:server\"",
+    "install": "cd server && npm i && cd ../chatbot && npm i",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "concurrently": "^9.0.1"
+  }
+}
