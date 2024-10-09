@@ -39,6 +39,9 @@ const io = new Server(server);
 io.on("connection", (socket) => {
   console.log("New WebSocket connection established.");
 
+  socket.emit('chat response', 'Hello! How can I assist you today?');
+  // Above initally sends a respones from our web socket or bot.
+
   socket.on("chat message", async (msg) => {
     // "chat message" is not a predefined event in the Socket.IO documentation. It's a custom event name
     // In Socket.IO, event types (or event names) are user-defined, meaning you can name them whatever makes sense for your app.
