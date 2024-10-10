@@ -1,32 +1,73 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from "react";
 import { io } from "socket.io-client";
 import { toggleChatBot } from "../utils/helpers";
 
+// Above we import our react tools, our io to interact with the server and our helper functions.
 
 function ChatBot() {
-  
-  useEffect(() => {
+  const [inputValue, setInputValue] = useState("");
+  const [messages, setMessages] = useState([]);
+  const socketRef = useRef(null);
 
+  /*You can store any mutable value in a ref, 
+  like timers, intervals, or even function 
+  references,without causing re-renders.
+  it helpsKeeping a mutable value that doesn't require re-rendering
+  when changed (like a WebSocket connection). 
+  */
+
+  useEffect(() => {
     const cleanup = toggleChatBot();
-    // Above, we call toggleChatBot and assign its return function to clean up 
+    // Above, we call toggleChatBot and assign its return function to clean up
     // Even though we attach to variable, as we call the event listener is active when component mounted
-    
+
+    const socketUrl =
+      process.env.REACT_APP_SOCKET_URL || "http://localhost:3002";
+    socketRef.current = io(socketUrl);
+    // Above, is our connection to our web socket.
+    // It ensures for production and local development.
+
+    socketRef.current.on("chat response", (msg) => {
+      console.log("Message from server:", msg);
+      setMessages((prevMessages) => [...prevMessages, msg]);
+    });
+
+    // Above, indicates what we want to happen on the client end when the server / websocket sends a chat response
+    // It logs the message and adds it to our messages array.
+
     return () => {
       if (cleanup) cleanup();
-
+      socketRef.current.disconnect();
+      socketRef.current.off("chat response");
     };
-    // Above, we use our cleanup fucntion to remove event listener if cleanup exists. 
-    // This happens when component  unmounts 
-
+    // Above, we use our cleanup fucntion to remove event listener if cleanup exists.
+    // This happens when component  unmounts
   }, []);
   // The purpose of useEffect is to manage side effects in functional components.
   // The return function is optional for clean up but is good practice.
   // The empty array is the dependency, empty array means this will run only once and that is when component first mounts.
 
+  const sendMessage = () => {
+    if (inputValue.trim()) {
+      // .trim here allows us to run whats below if a value occurs.
 
+      console.log("Sending message:", inputValue);
+
+      socketRef.current.emit("chat message", inputValue);
+      // Above, emits a message to the server
+
+      console.log("Adding to messages:", { text: inputValue, isBot: false });
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        { text: inputValue, isBot: false },
+      ]);
+
+      setInputValue("");
+    }
+  };
 
   return (
-    <section className="container-fluid showChatBot " id = "chatSection" >
+    <section className="container-fluid showChatBot " id="chatSection">
       <div className="row ">
         <button className="chatBot-toggler">
           <span className="material-symbols-outlined">mode_comment</span>
@@ -43,7 +84,6 @@ function ChatBot() {
             <li className="chat incoming">
               <span className=" material-symbols-outlined">smart_toy</span>
               <p>
-                {" "}
                 Hello 👋, <br /> how can I help today?
               </p>
             </li>
@@ -63,8 +103,17 @@ function ChatBot() {
               name="chatQuery"
               placeholder="Enter a message..."
               required
+              type="text"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
             ></textarea>
-            <span className="material-symbols-outlined" id="sendBtn">
+            {/* Above, we use setInputval on the onchange event handler. We asign the events target value. */}
+            {/* Also, we use value and set input value in {} for the text arear to always retain that value.*/}
+            <span
+              className="material-symbols-outlined"
+              id="sendBtn"
+              onClick={sendMessage}
+            >
               send
             </span>
           </div>
