@@ -21,13 +21,13 @@ const { Server } = require("socket.io");
 const http = require("http");
 // Above, we require http for client side http operations, creating and managing our webserver and handeling requests with our websocket.
 
-// Above is astorage adapter for our bot
+require("dotenv").config();
 
 const PORT = process.env.PORT || 3002;
 // Above is our port the server will run on.
 
 const mongoClient = new mongodb.MongoClient(
-  process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/botdata",
+  process.env.MONGODB_URI || process.env.bot_data_db,
   { useUnifiedTopology: true }
 );
 
@@ -42,6 +42,11 @@ async function start() {
   // Above we connect to the database
   const collection = database.collection("botstorage");
   // Above we make a collection within the db.
+
+  await collection.createIndex({ createdAt: 1 }, { expireAfterSeconds: 600 });
+  // Establish a TTL index for each entry in db to maintain db. 
+  // 600 seconds equals 10 mins 
+
 
   const mongoStorage = new MongoDbStorage(collection);
   // Above, we assign that collection for storage
@@ -78,7 +83,7 @@ async function start() {
   // Above, is a instance of our websocket that attaches our websocket to the same http server as our controller.
   // This enabels real-time features like chat messages between the client and server.
 
-  controller.handleMessage = async function (socket, message) {
+  controller.handleMessage = async function (socket, message, userId) {
     // handleMessage is a custom function added to our controller. It takes the socket and a message.
     try {
       if (!message || !message.text) {
@@ -87,24 +92,28 @@ async function start() {
       }
       // Above validates we have a message to process
 
-      console.log("Received message:", message);
+      //console.log("Received message:", message);
 
-      const responseText = "I heard: " + message.text; // Simple echo response
-      // Process the message and generate a response
+      let responseMessage = "I heard: " + message.text;
+
+      const responseObj = { responseText: responseMessage , isBot: true }     // Simple echo response
+      // Process the message and generate a response as a object 
 
       const structuredMessage = {
         _id: new mongodb.ObjectId(),
+        userId: userId,
         messageInfo: {
           messageId: new mongodb.ObjectId().toHexString(),
           text: message.text || "",
-          user: message.user || "",
+          user: message.socketUser || "",
           channel: message.channel || "",
           conversation: {
             id: message.conversation ? message.conversation.id : "",
           },
           type: "message",
-          response: responseText,
+          response: responseObj,
         },
+        createdAt: new Date()
       };
 
       // Above we structure the message before saving to db.
@@ -113,17 +122,17 @@ async function start() {
 
       try {
         const result = collection.insertOne(structuredMessage);
-        console.log("Document inserted:");
+        //console.log("Document inserted:");
       } catch (error) {
         console.error("Error inserting document:", error);
       }
       // Above we add the structured message into the db
 
-      console.log("Message saved to database:", responseText);
+      console.log("Message saved to database:", responseObj);
 
-      console.log("Triggering reply with response:", responseText);
+      console.log("Triggering reply with response:", responseObj);
       controller.trigger("reply", socket, {
-        responseText,
+        responseObj,
         originalMessage: message,
       });
 
@@ -137,16 +146,16 @@ async function start() {
   // Above, controller.handleMessage handles the functionality for our bot while keeping the controller properties.
   // We pass our socket and message into this function in order to structure and pass them to controller.on("reply".
 
-  controller.on("reply", async (socket, { responseText, originalMessage }) => {
+  controller.on("reply", async (socket, { responseObj, originalMessage }) => {
     try {
-      if (!responseText || !originalMessage || !originalMessage.text) {
-        console.error("Invalid reply data:", { responseText, originalMessage });
+      if (!responseObj || !originalMessage || !originalMessage.text) {
+        console.error("Invalid reply data:", { responseObj, originalMessage });
         return; // Exit if the expected data is not present
       }
       // Above, validates that responseText and originalMessage are defined
 
-      console.log("Sending reply:", responseText);
-      socket.emit("chat response", { text: responseText });
+      console.log("Sending reply:", responseObj);
+      socket.emit("chat response", responseObj);
       // Above, sends the reply back to the socket
     } catch (error) {
       console.error("Error in reply handler:", error);
@@ -157,11 +166,60 @@ async function start() {
   // It takes in the variables we used to trigger it for later use.
   // We use socket.emit to send the response back to client
 
-  io.on("connection", (socket) => {
-    console.log("New WebSocket connection established.");
+  io.on("connection", async (socket) => {
+    const userId = socket.handshake.query.userId;
+    // Above is the passed UUID from client to the server via the socket.
 
-    socket.emit("chat response", "Hello! How can I assist you today?");
-    // Above initally sends a respones from our web socket or bot.
+    console.log(`New WebSocket connection established.`);
+
+    try {
+      const messages = await collection.find({ userId: userId }).toArray(); // Convert cursor to array
+
+      if (messages.length === 0) {
+        console.log("No messages found for user.");
+      } else {
+        
+        let initalMessage = "Hello! How can I assist you today?";
+
+        const initalMessageObj = { responseText: initalMessage , isBot: true } 
+
+
+        socket.emit("chat response", initalMessageObj);
+        // Above initally sends a respones from our web socket or bot.
+
+
+
+        //console.log("Messages:", messages);
+
+
+        const newPrevMessageArr = messages.map((message) => {
+          const { messageInfo:{text,response} } = message;
+
+          // Above is destructuring a object within a object 
+          // messageInfo is a object within the messages object
+          // we destructure the text and response from messageInfo
+     
+          const prevMessageTextObj = { responseText: text, response}
+
+
+          return prevMessageTextObj;
+        });
+
+        //console.log(newPrevMessageArr)
+        // Above maps through our messages from our db and formats them for use in front end. 
+
+
+
+
+
+        socket.emit("previous messages", newPrevMessageArr);
+        // Above emits our response on "previous messages"
+      }
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+    }
+
+    // Above is a try catch block that queries our db for all messages from the user and sends it back on first load if any exist.
 
     socket.on("chat message", async (msg) => {
       // "chat message" is not a predefined event in the Socket.IO documentation. It's a custom event name
@@ -173,12 +231,12 @@ async function start() {
       }
       // Above is validation to make sure msg is a string that exists.
 
-      console.log("Message received: " + msg);
+      //console.log("Message received: " + msg);
 
       const newMessage = {
         text: msg,
         channel: socket.id,
-        user: socket.id,
+        socketUser: socket.id,
         type: "message",
         conversation: {
           id: socket.id,
@@ -190,7 +248,7 @@ async function start() {
 
       console.log("New message being triggered:", newMessage);
 
-      await controller.handleMessage(socket, newMessage);
+      await controller.handleMessage(socket, newMessage, userId);
 
       // Above, we pass the socket and newMessage to our custom controller function controller.handleMessage
       // This allows us to keep using the socket outside of this scope.
