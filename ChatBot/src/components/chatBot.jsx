@@ -74,10 +74,14 @@ function ChatBot() {
   // The return function is optional for clean up but is good practice.
   // The empty array is the dependency, empty array means this will run only once and that is when component first mounts.
 
+
+
   useEffect(() => {
     console.log("Messages array updated:", messages);
     console.log("PrevMessages array updated:", prevMessages);
   }, [messages]);
+
+  // Above logs the two arrays every time the messages array changes.
 
 
 
@@ -89,7 +93,7 @@ function ChatBot() {
       console.log("Sending message:", inputValue);
 
       socketRef.current.emit("chat message", inputValue);
-      // Above, emits a message to the server
+      // Above, emits a message to the server. emit helps sends to server.
 
       console.log("Adding to messages:", { text: inputValue, isBot: false });
       setMessages((prevMessages) => [
@@ -100,6 +104,7 @@ function ChatBot() {
       setInputValue("");
     }
   };
+  // Above helps send a message to our chatbot for processing.
 
   return (
     <section className="container-fluid showChatBot " id="chatSection">
