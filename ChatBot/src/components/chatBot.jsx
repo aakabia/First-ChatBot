@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { io } from "socket.io-client";
 import { toggleChatBot } from "../utils/helpers";
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 // Above we import our react tools, our io to interact with the server and our helper functions.
 
 function ChatBot() {
@@ -9,6 +9,7 @@ function ChatBot() {
   const [messages, setMessages] = useState([]);
   const [prevMessages, setPrevMessages] = useState([]);
   const socketRef = useRef(null);
+  const chatBoxRef = useRef(null);
 
   /*You can store any mutable value in a ref, 
   like timers, intervals, or even function 
@@ -17,32 +18,31 @@ function ChatBot() {
   when changed (like a WebSocket connection). 
   */
 
-  let userId = localStorage.getItem('userId');
+  /* Also, we use use ref to gain refrence to our chatbox conatiner for scrolling effects.*/ 
+
+  let userId = localStorage.getItem("userId");
 
   if (!userId) {
-      userId = uuidv4();
-      localStorage.setItem('userId', userId);
+    userId = uuidv4();
+    localStorage.setItem("userId", userId);
   }
 
   // Above is going to keep track of user sessions with a tracked uuid in local storage.
   // UUIDs provide a way to track users without requiring them to log in.
-
-
-
-
 
   useEffect(() => {
     const cleanup = toggleChatBot();
     // Above, we call toggleChatBot and assign its return function to clean up
     // Even though we attach to variable, as we call the event listener is active when component mounted
 
-    const socketUrl = import.meta.env.VITE_SOCKET_URL || "http://localhost:3002";
-    socketRef.current = io(socketUrl,{
-      query: { userId }
+    const socketUrl =
+      import.meta.env.VITE_SOCKET_URL || "http://localhost:3002";
+    socketRef.current = io(socketUrl, {
+      query: { userId },
     });
     // Above, is our connection to our web socket.
     // It ensures for production and local development.
-    // Above, whenever we query the socket we will pass the same uuid for this session. 
+    // Above, whenever we query the socket we will pass the same uuid for this session.
 
     socketRef.current.on("chat response", (msg) => {
       console.log("Message from server:", msg);
@@ -59,8 +59,6 @@ function ChatBot() {
 
     // Above we spread msgs in order to unpack them into one array.
 
-    
-
     return () => {
       if (cleanup) cleanup();
       socketRef.current.disconnect();
@@ -74,14 +72,22 @@ function ChatBot() {
   // The return function is optional for clean up but is good practice.
   // The empty array is the dependency, empty array means this will run only once and that is when component first mounts.
 
-
-
   useEffect(() => {
     console.log("Messages array updated:", messages);
     console.log("PrevMessages array updated:", prevMessages);
   }, [messages]);
 
   // Above logs the two arrays every time the messages array changes.
+
+  useEffect(() => {
+    if (chatBoxRef.current) {
+      chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
+    }
+  }, [prevMessages, messages]);
+
+  // The use Effect Above is responsible for scrolling our page whenever our messages or prevMessages Array change.
+  // It sets our scrollTop property for our chatbox element to the scrollHeight of the element. 
+
 
 
 
@@ -120,23 +126,48 @@ function ChatBot() {
             <span className="material-symbols-outlined">close</span>
           </div>
 
-          <ul className="chatBox">
-            <li className="chat incoming">
-              <span className=" material-symbols-outlined">smart_toy</span>
-              <p>
-                Hello 👋, <br /> how can I help today?
-              </p>
-            </li>
+          
+            <ul className="chatBox" ref={chatBoxRef}   >
+              {/* Above we use our chatBox reference */}
+              {prevMessages.map((item, index) => (
+                <React.Fragment key={index}>
+                  <li className="chat outgoing">
+                    <p>{item.responseText}</p>
+                  </li>
+                  {/* Above is used to Render user messages from prevMessages array */}
 
-            <li className="chat outgoing">
-              <p>
-                Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quae
-                doloribus nihil dignissimos non nam! Reprehenderit, explicabo
-                molestiae veniam iusto esse temporibus optio repellat molestias
-                iste!
-              </p>
-            </li>
-          </ul>
+                  <li className="chat incoming">
+                    <span className="material-symbols-outlined">smart_toy</span>
+                    <p>{item.response.responseText}</p>
+                  </li>
+                  {/*  ABove is used to Render bot response from prevMessages Array. */}
+                  {/* React fragement helps group multiple sibling elements without adding extra nodes. */}
+                  {/* I use fragment becuase we need to return two elements from our prev messages array */}
+                </React.Fragment>
+              ))}
+
+              {/* Above, we map over our prevMessages array and use react fragment to group elements in order to return multiple elements as one element. */}
+              {/* We are returing two li in this fragment. */}
+
+              {messages.map((item, index) => (
+                <li
+                  className={`chat ${item.isBot ? "incoming" : "outgoing"}`}
+                  key={index}
+                >
+                  {/* Above usees the teranary operator to help desplay css.  */}
+
+                  {item.isBot && (
+                    <span className="material-symbols-outlined">smart_toy</span>
+                  )}
+
+                  {/* Above, only displays a span if isBot is true.  */}
+
+                  <p>{item.isBot ? item.responseText : item.text}</p>
+                </li>
+              ))}
+              {/* Above, we map over our messages array and only return one element per index so we do not use fragment here. */}
+            </ul>
+          
 
           <div className="chatInput">
             <textarea
