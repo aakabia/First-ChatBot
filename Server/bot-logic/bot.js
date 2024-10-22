@@ -1,6 +1,8 @@
 const mongodb = require("mongodb");
-// Above, imports mongo db to create id for messages
+const {botOpenAIResponse} = require("../helpers/api-call");
 
+// Above, imports mongo db to create id for messages
+// Also, we import our botOpenAIResponse to help us get responses. 
 
 botController = async (controller, collection) => {
 
@@ -19,7 +21,10 @@ botController = async (controller, collection) => {
 
       //console.log("Received message:", message);
 
-      let responseMessage = "I heard: " + message.text;
+      let responseMessage = await botOpenAIResponse(message.text);
+
+      // Above we use our api call to get a response from Open AI.
+      // We pass in the message text from our user input.
 
       const responseObj = { responseText: responseMessage, isBot: true }; // Simple echo response
       // Process the message and generate a response as a object
@@ -43,7 +48,7 @@ botController = async (controller, collection) => {
 
       // Above we structure the message before saving to db.
 
-      console.log("structured message:", structuredMessage);
+      //console.log("structured message:", structuredMessage);
 
       try {
         const result = await collection.insertOne(structuredMessage);
@@ -53,10 +58,10 @@ botController = async (controller, collection) => {
       }
       // Above we add the structured message into the db
 
-      console.log("Message saved to database:", responseObj);
+      //console.log("Message saved to database:", responseObj);
 
-      console.log("Triggering reply with response:", responseObj);
-      
+      //console.log("Triggering reply with response:", responseObj);
+
       controller.trigger("reply", socket, {
         responseObj,
         originalMessage: message,
@@ -80,7 +85,7 @@ botController = async (controller, collection) => {
       }
       // Above, validates that responseText and originalMessage are defined
 
-      console.log("Sending reply:", responseObj);
+      //console.log("Sending reply:", responseObj);
       socket.emit("chat response", responseObj);
       // Above, sends the reply back to the socket
     } catch (error) {

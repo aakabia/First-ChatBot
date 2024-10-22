@@ -16,7 +16,7 @@ const { setupSocket } = require("./bot-logic/socket");
 // Above, dotenv is responsible for our enviornment variables.
 // mongoConnection establishes connection to our db and returns the collection
 // botController sets events on the controller object from botkit.
-// setupSocket sets events on the websocket/io object from Server 
+// setupSocket sets events on the websocket/io object from Server
 
 const PORT = process.env.PORT || 3002;
 // Above is our port the server will run on.
