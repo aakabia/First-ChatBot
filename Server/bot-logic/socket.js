@@ -76,13 +76,13 @@ setupSocket = async (io, collection, controller) => {
 
       // Above, creates a new message format we want to pass to handle message.
 
-      console.log("New message being triggered:", newMessage);
+      //console.log("New message being triggered:", newMessage);
 
       await controller.handleMessage(socket, newMessage, userId);
 
       // Above, we pass the socket and newMessage to our custom controller function controller.handleMessage
       // This allows us to keep using the socket outside of this scope.
-      console.log("**************finish***********");
+      //console.log("**************finish***********");
     });
 
     socket.on("disconnect", () => {

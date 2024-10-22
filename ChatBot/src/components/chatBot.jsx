@@ -45,7 +45,7 @@ function ChatBot() {
     // Above, whenever we query the socket we will pass the same uuid for this session.
 
     socketRef.current.on("chat response", (msg) => {
-      console.log("Message from server:", msg);
+      //console.log("Message from server:", msg);
       setMessages((prevMessages) => [...prevMessages, msg]);
     });
 
@@ -53,7 +53,7 @@ function ChatBot() {
     // It logs the message and adds it to our messages array.
 
     socketRef.current.on("previous messages", (msgs) => {
-      console.log("Previous Message from server:", msgs);
+      //console.log("Previous Message from server:", msgs);
       setPrevMessages((prevMessages) => [...prevMessages, ...msgs]);
     });
 
@@ -72,10 +72,11 @@ function ChatBot() {
   // The return function is optional for clean up but is good practice.
   // The empty array is the dependency, empty array means this will run only once and that is when component first mounts.
 
+  /*
   useEffect(() => {
     console.log("Messages array updated:", messages);
     console.log("PrevMessages array updated:", prevMessages);
-  }, [messages]);
+  }, [messages]);*/
 
   // Above logs the two arrays every time the messages array changes.
 
@@ -96,12 +97,12 @@ function ChatBot() {
     if (inputValue.trim()) {
       // .trim here allows us to run whats below if a value occurs.
 
-      console.log("Sending message:", inputValue);
+      //console.log("Sending message:", inputValue);
 
       socketRef.current.emit("chat message", inputValue);
       // Above, emits a message to the server. emit helps sends to server.
 
-      console.log("Adding to messages:", { text: inputValue, isBot: false });
+      //console.log("Adding to messages:", { text: inputValue, isBot: false });
       setMessages((prevMessages) => [
         ...prevMessages,
         { text: inputValue, isBot: false },
