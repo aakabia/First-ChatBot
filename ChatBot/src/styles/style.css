@@ -219,6 +219,42 @@ Above ends the css for our chat area!
 
 /*  End of toggeler button for chatbot.*/
 
+
+.typingDots {
+  display: inline-block;
+}
+
+
+
+.typingDots::after {
+  content: '';
+  display: inline-block;
+  animation: typing 1.5s infinite steps(5);
+}
+
+/* The animation property specifies the animation to apply.  */
+
+@keyframes typing {
+  0% { content: '.'; }
+  20% { content: '..'; }
+  40% { content: '...'; }
+  60% { content: '....'; }
+  80% { content: '.....'; }
+  100% { content: '......'; }
+}
+
+/* key frame animation for typing  */
+
+
+/* end of typing dots animation*/
+
+
+
+
+
+
+
+
 @media (max-width: 490px) {
   /* our media query has a max width of 490px.
      This states this css below will take place until 490 px.

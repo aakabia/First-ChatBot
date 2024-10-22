@@ -8,6 +8,7 @@ function ChatBot() {
   const [inputValue, setInputValue] = useState("");
   const [messages, setMessages] = useState([]);
   const [prevMessages, setPrevMessages] = useState([]);
+  const [isBotTyping, setisBotTyping] = useState(false);
   const socketRef = useRef(null);
   const chatBoxRef = useRef(null);
 
@@ -18,7 +19,7 @@ function ChatBot() {
   when changed (like a WebSocket connection). 
   */
 
-  /* Also, we use use ref to gain refrence to our chatbox conatiner for scrolling effects.*/ 
+  /* Also, we use use ref to gain refrence to our chatbox conatiner for scrolling effects.*/
 
   let userId = localStorage.getItem("userId");
 
@@ -47,6 +48,7 @@ function ChatBot() {
     socketRef.current.on("chat response", (msg) => {
       //console.log("Message from server:", msg);
       setMessages((prevMessages) => [...prevMessages, msg]);
+      setisBotTyping(false); // set is typing to false once response is given.
     });
 
     // Above, indicates what we want to happen on the client end when the server / websocket sends a chat response
@@ -87,11 +89,7 @@ function ChatBot() {
   }, [prevMessages, messages]);
 
   // The use Effect Above is responsible for scrolling our page whenever our messages or prevMessages Array change.
-  // It sets our scrollTop property for our chatbox element to the scrollHeight of the element. 
-
-
-
-
+  // It sets our scrollTop property for our chatbox element to the scrollHeight of the element.
 
   const sendMessage = () => {
     if (inputValue.trim()) {
@@ -108,6 +106,7 @@ function ChatBot() {
         { text: inputValue, isBot: false },
       ]);
 
+      setisBotTyping(true); // set is typing to true while we wait for response.
       setInputValue("");
     }
   };
@@ -127,48 +126,52 @@ function ChatBot() {
             <span className="material-symbols-outlined">close</span>
           </div>
 
-          
-            <ul className="chatBox" ref={chatBoxRef}   >
-              {/* Above we use our chatBox reference */}
-              {prevMessages.map((item, index) => (
-                <React.Fragment key={index}>
-                  <li className="chat outgoing">
-                    <p>{item.responseText}</p>
-                  </li>
-                  {/* Above is used to Render user messages from prevMessages array */}
-
-                  <li className="chat incoming">
-                    <span className="material-symbols-outlined">smart_toy</span>
-                    <p>{item.response.responseText}</p>
-                  </li>
-                  {/*  ABove is used to Render bot response from prevMessages Array. */}
-                  {/* React fragement helps group multiple sibling elements without adding extra nodes. */}
-                  {/* I use fragment becuase we need to return two elements from our prev messages array */}
-                </React.Fragment>
-              ))}
-
-              {/* Above, we map over our prevMessages array and use react fragment to group elements in order to return multiple elements as one element. */}
-              {/* We are returing two li in this fragment. */}
-
-              {messages.map((item, index) => (
-                <li
-                  className={`chat ${item.isBot ? "incoming" : "outgoing"}`}
-                  key={index}
-                >
-                  {/* Above usees the teranary operator to help desplay css.  */}
-
-                  {item.isBot && (
-                    <span className="material-symbols-outlined">smart_toy</span>
-                  )}
-
-                  {/* Above, only displays a span if isBot is true.  */}
-
-                  <p>{item.isBot ? item.responseText : item.text}</p>
+          <ul className="chatBox" ref={chatBoxRef}>
+            {/* Above we use our chatBox reference */}
+            {prevMessages.map((item, index) => (
+              <React.Fragment key={index}>
+                <li className="chat outgoing">
+                  <p>{item.responseText}</p>
                 </li>
-              ))}
-              {/* Above, we map over our messages array and only return one element per index so we do not use fragment here. */}
-            </ul>
-          
+                {/* Above is used to Render user messages from prevMessages array */}
+
+                <li className="chat incoming">
+                  <span className="material-symbols-outlined">smart_toy</span>
+                  <p>{item.response.responseText}</p>
+                </li>
+              </React.Fragment>
+            ))}
+            {/*  ABove is used to Render bot response from prevMessages Array. */}
+            {/* React fragement helps group multiple sibling elements without adding extra nodes. */}
+            {/* I use fragment becuase we need to return two elements from our prev messages array */}
+
+            {messages.map((item, index) => (
+              <li
+                className={`chat ${item.isBot ? "incoming" : "outgoing"}`}
+                key={index}
+              >
+                {/* Above usees the teranary operator to help desplay css.  */}
+
+                {item.isBot && (
+                  <span className="material-symbols-outlined">smart_toy</span>
+                )}
+
+                {/* Above, only displays a span if isBot is true.  */}
+
+                <p>{item.isBot ? item.responseText : item.text}</p>
+              </li>
+            ))}
+            {/* Above, we map over our messages array and only return one element per index so we do not use fragment here. */}
+
+            {isBotTyping && (
+              <li className="chat incoming">
+                <span className="material-symbols-outlined">smart_toy</span>
+                <p className="typingDots"> ..... </p>
+              </li>
+            )}
+
+            {/* ABove conditionally renders a element based on if the  bot is typing.  */}
+          </ul>
 
           <div className="chatInput">
             <textarea
@@ -178,6 +181,7 @@ function ChatBot() {
               type="text"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
+              disabled={isBotTyping} // disable the textarea if bot is typing.
             ></textarea>
             {/* Above, we use setInputval on the onchange event handler. We asign the events target value. */}
             {/* Also, we use value and set input value in {} for the text arear to always retain that value.*/}
